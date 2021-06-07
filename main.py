@@ -1,21 +1,33 @@
-import random
+import time
+
 import chess
-import numpy
-import numpy as np
-import Evaluation
+
+import AI
 
 board = chess.Board()
-evaluation = Evaluation.evaluate(board)
-print(evaluation)
 
-moves = []
-while True:
-    PlayerMove = input()
-    board.push_san(PlayerMove)
-    print(board)
-    if not board.turn:
-        for move in board.legal_moves:
-            moves.append(move)
-        AIMove = random.choice(moves)
-        board.push(AIMove)
-        print(board)
+print(board)
+while not board.is_game_over():
+    if not board.is_game_over():
+        if board.turn:
+
+            playerMove = input()
+            board.push_san(playerMove)
+            timeStart = time.time()
+            print(board)
+
+        elif not board.turn:
+
+            print("-------------------------------")
+            AIMove = AI.findBestMoveNegaMax(board, board.legal_moves)
+            board.push(AIMove)
+            timeEnd = time.time()
+            print("Time to move: " + str(timeEnd - timeStart))
+            evaluation = AI.evaluate(board)
+            print("Evaluation " + str(evaluation))
+            print("AI Move: " + chess.Move.__str__(AIMove))
+            print(board)
+            print("-------------------------------")
+
+else:
+    print("Game Over: " + board.result())

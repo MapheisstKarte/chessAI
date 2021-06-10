@@ -13,12 +13,11 @@ def evaluate(board: chess.Board):
         while file < 8:
             square = chess.square(file, rank)
             piece = board.piece_at(square)
-            if piece != None:
+            if piece is not None:
                 color = piece.color
                 piece_type = piece.piece_type
                 if color:
                     if piece_type == 1:
-
                         evaluation += 10 + (vt.Heuristics.WHITE_PAWN_TABLE[file, rank] / 10)
                     elif piece_type == 2:
                         evaluation += 30 + (vt.Heuristics.KNIGHT_TABLE[file, rank] / 10)
@@ -54,7 +53,7 @@ def evaluate(board: chess.Board):
                 evaluation = 999
             if board.is_check():
                 evaluation += 0.1
-        if not board.turn:  # if it's blacks turn
+        else:  # if it's blacks turn
             if board.is_checkmate():
                 evaluation = -999
             if board.is_check():
@@ -63,53 +62,54 @@ def evaluate(board: chess.Board):
     return evaluation / 10
 
 
-
 def orderMoves(board: chess.Board):
     firstMoves = []
     other = []
-    orderedMoves = []
 
     for move in board.legal_moves:
         if board.gives_check(move) or board.is_capture(move):
             firstMoves.append(move)
         else:
             other.append(move)
-    orderedMoves = firstMoves + other
-    return orderedMoves
+    return firstMoves + other
 
 
 # helping function
 
-def findBestMoveNegaMax(board: chess.Board, legalMoves):
-    global nextMove, counter
-    nextMove = None
-    counter = 0
-    findMoveNegaMax(board, board.legal_moves, DEPTH, -999, 999, 1 if board.turn else - 1)
-    print("Positions calculated: " + str(counter))
-    return nextMove
+class MoveFinder:
+    def __init__(self, board, nextMove, legalMoves):
+        self.board = board
+        self.nextMove = nextMove
+        self.legalMoves = legalMoves
 
+    def findBestMoveNegaMax(self, board: chess.Board, legalMoves):
+        self.nextMove = None
+        self.counter = 0
+        self.findMoveNegaMax(board, board.legal_moves, DEPTH, -999, 999, 1 if board.turn else - 1)
+        print("Positions calculated: " + str(counter))
+        return nextMove
 
-# negamax algorithm with Alpha-Beta pruning
+    # negamax algorithm with Alpha-Beta pruning
 
-def findMoveNegaMax(board: chess.Board, legalMoves, depth, alpha, beta, turnMultiplier):
-    global nextMove, counter
-    counter += 1
-    if depth == 0:
-        return turnMultiplier * evaluate(board)
+    def findMoveNegaMax(self, board: chess.Board, legalMoves, depth, alpha, beta, turnMultiplier):
+        global nextMove, counter
+        counter += 1
+        if depth == 0:
+            return turnMultiplier * evaluate(board)
 
-    maxScore = -999
+        maxScore = -999
 
-    for move in orderMoves(board):
-        board.push(move)
-        nextMoves = move
-        score = -findMoveNegaMax(board, orderMoves(board), depth - 1, -beta, -alpha, -turnMultiplier)
-        if score > maxScore:
-            maxScore = score
-            if depth == DEPTH:
-                nextMove = move
-        board.pop()
-        if maxScore > alpha:  # pruning
-            alpha = maxScore
-        if alpha >= beta:
-            break
-    return maxScore
+        for move in orderMoves(board):
+            board.push(move)
+            nextMoves = move
+            score = -self.findMoveNegaMax(board, orderMoves(board), depth - 1, -beta, -alpha, -turnMultiplier)
+            if score > maxScore:
+                maxScore = score
+                if depth == DEPTH:
+                    nextMove = move
+            board.pop()
+            if maxScore > alpha:  # pruning
+                alpha = maxScore
+            if alpha >= beta:
+                break
+        return maxScore

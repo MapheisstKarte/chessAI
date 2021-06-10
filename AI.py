@@ -1,8 +1,11 @@
+from dataclasses import dataclass
+from typing import Optional
+
 import chess
 
 import ValueTables as vt
 
-DEPTH = 4
+DEPTH = 5
 
 
 def evaluate(board: chess.Board):
@@ -76,33 +79,36 @@ def orderMoves(board: chess.Board):
 
 # helping function
 
-class MoveFinder:
-    def __init__(self, board, nextMove, legalMoves):
-        self.board = board
-        self.nextMove = nextMove
-        self.legalMoves = legalMoves
+@dataclass
+class MoveResult:
+    move: Optional[chess.Move]
+    maxScore: float
 
-    def findBestMoveNegaMax(self, board: chess.Board, legalMoves):
-        self.nextMove = None
+
+class MoveFinder:
+    def __init__(self, board: chess.Board, counter: int = 0):
+        self.board = board
+        self.counter = counter
+
+    def findBestMoveNegaMax(self, board: chess.Board):
         self.counter = 0
-        self.findMoveNegaMax(board, board.legal_moves, DEPTH, -999, 999, 1 if board.turn else - 1)
-        print("Positions calculated: " + str(counter))
-        return nextMove
+        nextMove = self.findMoveNegaMax(board, DEPTH, -999, 999, 1 if board.turn else - 1)
+        print("Positions calculated: " + str(self.counter))
+        return nextMove.move
 
     # negamax algorithm with Alpha-Beta pruning
 
-    def findMoveNegaMax(self, board: chess.Board, legalMoves, depth, alpha, beta, turnMultiplier):
-        global nextMove, counter
-        counter += 1
-        if depth == 0:
-            return turnMultiplier * evaluate(board)
-
+    def findMoveNegaMax(self, board: chess.Board, depth, alpha, beta, turnMultiplier) -> MoveResult:
+        self.counter += 1
         maxScore = -999
+        nextMove = None
+
+        if depth == 0:
+            return MoveResult(move=nextMove, maxScore=turnMultiplier * evaluate(board))
 
         for move in orderMoves(board):
             board.push(move)
-            nextMoves = move
-            score = -self.findMoveNegaMax(board, orderMoves(board), depth - 1, -beta, -alpha, -turnMultiplier)
+            score = -self.findMoveNegaMax(board, depth - 1, -beta, -alpha, -turnMultiplier).maxScore
             if score > maxScore:
                 maxScore = score
                 if depth == DEPTH:
@@ -112,4 +118,5 @@ class MoveFinder:
                 alpha = maxScore
             if alpha >= beta:
                 break
-        return maxScore
+
+        return MoveResult(move=nextMove, maxScore=maxScore)

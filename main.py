@@ -5,6 +5,7 @@ import chess
 import AI
 
 board = chess.Board()
+move_finder = AI.MoveFinder(board)
 
 print(board)
 while not board.is_game_over():
@@ -19,7 +20,7 @@ while not board.is_game_over():
     elif not board.turn:
 
         print("-------------------------------")
-        AIMove = AI.findBestMoveNegaMax(board, board.legal_moves)
+        AIMove = move_finder.findBestMoveNegaMax(board)
         board.push(AIMove)
         timeEnd = time.time()
         print("Time to move: " + str(timeEnd - timeStart))

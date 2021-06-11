@@ -86,6 +86,7 @@ class MoveResult:
 
 
 class MoveFinder:
+
     def __init__(self, board: chess.Board, counter: int = 0):
         self.board = board
         self.counter = counter

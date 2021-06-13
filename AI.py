@@ -5,7 +5,7 @@ import chess
 
 import ValueTables as vt
 
-DEPTH = 5
+DEPTH = 4
 
 
 def evaluate(board: chess.Board):
@@ -25,7 +25,7 @@ def evaluate(board: chess.Board):
                     elif piece_type == 2:
                         evaluation += 30 + (vt.Heuristics.KNIGHT_TABLE[file, rank] / 10)
                     elif piece_type == 3:
-                        evaluation += 40 + (vt.Heuristics.BISHOP_TABLE[file, rank] / 10)
+                        evaluation += 32.5 + (vt.Heuristics.BISHOP_TABLE[file, rank] / 10)
                     elif piece_type == 4:
                         evaluation += 50 + (vt.Heuristics.ROOK_TABLE[file, rank] / 10)
                     elif piece_type == 5:
@@ -38,7 +38,7 @@ def evaluate(board: chess.Board):
                     elif piece_type == 2:
                         evaluation -= 30 + (vt.Heuristics.KNIGHT_TABLE[file, rank] / 10)
                     elif piece_type == 3:
-                        evaluation -= 40 + (vt.Heuristics.BISHOP_TABLE[file, rank] / 10)
+                        evaluation -= 35 + (vt.Heuristics.BISHOP_TABLE[file, rank] / 10)
                     elif piece_type == 4:
                         evaluation -= 50 + (vt.Heuristics.ROOK_TABLE[file, rank] / 10)
                     elif piece_type == 5:
@@ -56,6 +56,7 @@ def evaluate(board: chess.Board):
                 evaluation = 999
             if board.is_check():
                 evaluation += 0.1
+
         else:  # if it's blacks turn
             if board.is_checkmate():
                 evaluation = -999

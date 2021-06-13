@@ -8,6 +8,7 @@ board = chess.Board()
 move_finder = AI.MoveFinder(board)
 
 print(board)
+
 while not board.is_game_over():
 
     if board.turn:
@@ -23,7 +24,9 @@ while not board.is_game_over():
         AIMove = move_finder.findBestMoveNegaMax(board)
         board.push(AIMove)
         timeEnd = time.time()
-        print("Time to move: " + str(timeEnd - timeStart))
+        print("nodes per second: " + str(round(move_finder.counter / (timeEnd - timeStart))) + "\n"
+              + "Time to move: " + str(timeEnd - timeStart))
+
         evaluation = AI.evaluate(board)
         print("Evaluation " + str(evaluation))
         print("AI Move: " + chess.Move.__str__(AIMove))
@@ -31,4 +34,5 @@ while not board.is_game_over():
         print("-------------------------------")
 
 else:
+
     print("Game Over: " + board.result())

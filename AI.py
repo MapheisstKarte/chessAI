@@ -5,7 +5,7 @@ import chess
 
 import ValueTables as vt
 
-DEPTH = 4
+DEPTH = 3
 
 
 def evaluate(board: chess.Board):
@@ -32,6 +32,7 @@ def evaluate(board: chess.Board):
                         evaluation += 90 + (vt.Heuristics.QUEEN_TABLE[file, rank] / 10)
                     elif piece_type == 6:
                         evaluation += 999 + (vt.Heuristics.KING_TABLE[file, rank] / 10)
+
                 elif not color:
                     if piece_type == 1:
                         evaluation -= 10 + (vt.Heuristics.BLACK_PAWN_TABLE[file, rank] / 10)

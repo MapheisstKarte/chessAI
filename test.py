@@ -8,7 +8,9 @@ move_finder = AI.MoveFinder(board)
 print(board)
 counter = 0
 while True:
-    board.push(move_finder.findBestMoveNegaMax(board))
+    move = move_finder.findBestMoveNegaMax(board)
+    board.push(move)
     counter += 1
     print("move: " + str(counter))
+    print("move: " + str(move))
     print(board)

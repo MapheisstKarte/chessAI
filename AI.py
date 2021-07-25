@@ -5,7 +5,7 @@ import chess
 
 import ValueTables as vt
 
-DEPTH = 3
+DEPTH = 4
 
 
 def evaluate(board: chess.Board):
@@ -95,9 +95,9 @@ class MoveFinder:
 
     def findBestMoveNegaMax(self, board: chess.Board):
         self.counter = 0
-        nextMove = self.findMoveNegaMax(board, DEPTH, -999, 999, 1 if board.turn else - 1)
+        move_result = self.findMoveNegaMax(board, DEPTH, -999, 999, 1 if board.turn else - 1)
         print("Positions calculated: " + str(self.counter))
-        return nextMove.move
+        return move_result
 
     # negamax algorithm with Alpha-Beta pruning
 

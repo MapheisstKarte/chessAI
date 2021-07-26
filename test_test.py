@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import chess
 
-from test import find_best_move
+from test import find_best_move, evaluate
 
 
 class Test(TestCase):
@@ -28,3 +28,9 @@ class Test(TestCase):
         self.assertEqual(fen_before, fen_after)
         self.assertTrue(result.move in board.legal_moves)
         print(result)
+
+
+class TestEvaluate(TestCase):
+    def test_plain_board(self):
+        board = chess.Board()
+        self.assertEqual(evaluate(board), -0.5)

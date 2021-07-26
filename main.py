@@ -2,11 +2,11 @@ import time
 
 import chess
 
+import AI
 from test import find_best_move
 
 board = chess.Board()
-
-
+move_finder = AI.MoveFinder(board=board)
 print(board)
 
 while not board.is_game_over():
@@ -22,6 +22,7 @@ while not board.is_game_over():
         print("-------------------------------")
         if __name__ == '__main__':
             move_result = find_best_move(board)
+            # move_result = move_finder.findBestMoveNegaMax(board=board)
             board.push(move_result.move)
             evaluation = move_result.score
             print("Evaluation " + str(evaluation))

@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 from typing import Optional
 
@@ -5,7 +6,7 @@ import chess
 
 import ValueTables as vt
 
-DEPTH = 4
+DEPTH = 5
 
 
 def evaluate(board: chess.Board):
@@ -51,18 +52,20 @@ def evaluate(board: chess.Board):
         rank = rank + 1
     if board.is_stalemate():
         evaluation = 0
+        return evaluation
 
-        if board.turn:  # if it's white's turn
-            if board.is_checkmate():
-                evaluation = 999
-            if board.is_check():
-                evaluation += 0.1
-
-        else:  # if it's blacks turn
-            if board.is_checkmate():
-                evaluation = -999
-            if board.is_check():
-                evaluation -= 0.1
+    if board.turn:  # if it's white's turn
+        if board.is_checkmate():
+            evaluation = -math.inf
+            return evaluation
+        if board.is_check():
+            evaluation += 0.1
+    else:  # if it's blacks turn
+        if board.is_checkmate():
+            evaluation = +math.inf
+            return evaluation
+        if board.is_check():
+            evaluation -= 0.1
 
     return evaluation / 10
 
@@ -106,7 +109,7 @@ class MoveFinder:
         maxScore = -999
         nextMove = None
 
-        if depth == 0:
+        if depth == 0 or board.is_checkmate():
             return MoveResult(move=nextMove, maxScore=turnMultiplier * evaluate(board))
 
         for move in orderMoves(board):

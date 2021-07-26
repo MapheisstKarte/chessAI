@@ -8,53 +8,9 @@ import chess
 
 import ValueTables as vt
 
-pool = ProcessPoolExecutor()
-
-
-# pool = ThreadPoolExecutor()
-
 
 def evaluate(board: chess.Board):
     evaluation = 0
-    rank = 0
-    while rank < 8:
-        file = 0
-        while file < 8:
-            square = chess.square(file, rank)
-            piece = board.piece_at(square)
-            if piece is not None:
-                color = piece.color
-                piece_type = piece.piece_type
-                if color:
-                    if piece_type == 1:
-                        evaluation += 10 + (vt.Heuristics.WHITE_PAWN_TABLE[file, rank] / 10)
-                    elif piece_type == 2:
-                        evaluation += 30 + (vt.Heuristics.KNIGHT_TABLE[file, rank] / 10)
-                    elif piece_type == 3:
-                        evaluation += 32.5 + (vt.Heuristics.BISHOP_TABLE[file, rank] / 10)
-                    elif piece_type == 4:
-                        evaluation += 50 + (vt.Heuristics.ROOK_TABLE[file, rank] / 10)
-                    elif piece_type == 5:
-                        evaluation += 90 + (vt.Heuristics.QUEEN_TABLE[file, rank] / 10)
-                    elif piece_type == 6:
-                        evaluation += 999 + (vt.Heuristics.KING_TABLE[file, rank] / 10)
-
-                elif not color:
-                    if piece_type == 1:
-                        evaluation -= 10 + (vt.Heuristics.BLACK_PAWN_TABLE[file, rank] / 10)
-                    elif piece_type == 2:
-                        evaluation -= 30 + (vt.Heuristics.KNIGHT_TABLE[file, rank] / 10)
-                    elif piece_type == 3:
-                        evaluation -= 35 + (vt.Heuristics.BISHOP_TABLE[file, rank] / 10)
-                    elif piece_type == 4:
-                        evaluation -= 50 + (vt.Heuristics.ROOK_TABLE[file, rank] / 10)
-                    elif piece_type == 5:
-                        evaluation -= 90 + (vt.Heuristics.QUEEN_TABLE[file, rank] / 10)
-                    elif piece_type == 6:
-                        evaluation -= 999 + (vt.Heuristics.KING_TABLE[file, rank] / 10)
-
-            file = file + 1
-        rank = rank + 1
     if board.is_stalemate():
         evaluation = 0
         return evaluation
@@ -72,8 +28,45 @@ def evaluate(board: chess.Board):
         if board.is_check():
             evaluation -= 0.1
 
-    return evaluation / 10
+    for fieldnumber in range(64):
+        piece_at = board.piece_at(fieldnumber)
+        if piece_at is not None:
+            evaluation += evaluate_square(board, fieldnumber, piece_at)
+    return evaluation
 
+
+def evaluate_square(board: chess.Board, square: int, piece: chess.Piece) -> float:
+    evaluation = 0
+    color = piece.color
+    piece_type = piece.piece_type
+    if color:
+        if piece_type == 1:
+            evaluation += 10 + (vt.Heuristics.WHITE_PAWN_TABLE.flatten()[square])
+        elif piece_type == 2:
+            evaluation += 30 + (vt.Heuristics.KNIGHT_TABLE.flatten()[square])
+        elif piece_type == 3:
+            evaluation += 32.5 + (vt.Heuristics.BISHOP_TABLE.flatten()[square])
+        elif piece_type == 4:
+            evaluation += 50 + (vt.Heuristics.ROOK_TABLE.flatten()[square])
+        elif piece_type == 5:
+            evaluation += 90 + (vt.Heuristics.QUEEN_TABLE.flatten()[square])
+        elif piece_type == 6:
+            evaluation += 999 + (vt.Heuristics.KING_TABLE.flatten()[square])
+
+    elif not color:
+        if piece_type == 1:
+            evaluation -= 10 + (vt.Heuristics.BLACK_PAWN_TABLE.flatten()[square])
+        elif piece_type == 2:
+            evaluation -= 30 + (vt.Heuristics.KNIGHT_TABLE.flatten()[square])
+        elif piece_type == 3:
+            evaluation -= 35 + (vt.Heuristics.BISHOP_TABLE.flatten()[square])
+        elif piece_type == 4:
+            evaluation -= 50 + (vt.Heuristics.ROOK_TABLE.flatten()[square])
+        elif piece_type == 5:
+            evaluation -= 90 + (vt.Heuristics.QUEEN_TABLE.flatten()[square])
+        elif piece_type == 6:
+            evaluation -= 999 + (vt.Heuristics.KING_TABLE.flatten()[square])
+    return evaluation / 100
 
 def order_moves(board: chess.Board):
     first_moves = []
@@ -96,10 +89,10 @@ class MoveResult:
 @dataclass
 class BoardMove:
     move: chess.Move
-    board_fen: str
+    board: chess.Board
 
 
-def find_best_move(board: chess.Board) -> MoveResult:
+def find_best_move(board: chess.Board, pool: ProcessPoolExecutor) -> MoveResult:
     max_score = -math.inf
     next_move = None
 
@@ -107,7 +100,7 @@ def find_best_move(board: chess.Board) -> MoveResult:
     for move in order_moves(board):
         next_boards.append(move)
 
-    board_moves = [BoardMove(move=m, board_fen=board.fen()) for m in order_moves(board)]
+    board_moves = [BoardMove(move=m, board=board.copy()) for m in order_moves(board)]
 
     results = pool.map(minimax_finder, board_moves)
 
@@ -120,8 +113,8 @@ def find_best_move(board: chess.Board) -> MoveResult:
 
 
 def minimax_finder(board_move: BoardMove) -> MoveResult:
-    board = chess.Board(fen=board_move.board_fen)
-    result = minimax(board, board_move.move, 1 if board.turn else -1, 6, -999, 999)
+    board = board_move.board
+    result = minimax(board, board_move.move, 1 if board.turn else -1, 5, -999, 999)
     return MoveResult(move=board_move.move, score=result)
 
 

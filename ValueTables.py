@@ -1,7 +1,6 @@
 import numpy as np
 
 
-
 class Heuristics:
     WHITE_PAWN_TABLE = np.array([
 

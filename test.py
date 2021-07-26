@@ -1,5 +1,6 @@
 import math
-from concurrent.futures import ThreadPoolExecutor
+import time
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from typing import Optional
 
@@ -7,8 +8,10 @@ import chess
 
 import ValueTables as vt
 
-# pool = ProcessPoolExecutor()
-pool = ThreadPoolExecutor(max_workers=1)
+pool = ProcessPoolExecutor()
+
+
+# pool = ThreadPoolExecutor()
 
 
 def evaluate(board: chess.Board):
@@ -93,7 +96,7 @@ class MoveResult:
 @dataclass
 class BoardMove:
     move: chess.Move
-    board: chess.Board
+    board_fen: str
 
 
 def find_best_move(board: chess.Board) -> MoveResult:
@@ -104,33 +107,47 @@ def find_best_move(board: chess.Board) -> MoveResult:
     for move in order_moves(board):
         next_boards.append(move)
 
-    board_moves = [BoardMove(move=m, board=board.copy()) for m in order_moves(board)]
+    board_moves = [BoardMove(move=m, board_fen=board.fen()) for m in order_moves(board)]
 
-    # with pool as executor:
     results = pool.map(minimax_finder, board_moves)
 
     for result in results:
         if result.score > max_score:
             max_score = result.score
             next_move = result.move
-
+    print("Time: " + str(time.perf_counter()))
     return MoveResult(move=next_move, score=max_score)
 
 
 def minimax_finder(board_move: BoardMove) -> MoveResult:
-    result = minimax(board_move.board, 1 if board_move.board.turn else -1, 3, -999, 999)
-    print(result)
+    board = chess.Board(fen=board_move.board_fen)
+    result = minimax(board, board_move.move, 1 if board.turn else -1, 6, -999, 999)
     return MoveResult(move=board_move.move, score=result)
 
 
-def minimax(board: chess.Board, player: int, depth: int, alpha: int, beta: int) -> float:
+def minimax(board: chess.Board, move: chess.Move, player: int, depth: int, alpha: int, beta: int) -> float:
     if depth == 0:
         return evaluate(board) * player
     score = -math.inf
-    moves = order_moves(board)
-    for move in moves:
+    board.push(move)
+    curr = -minimax_all_moves(board, -player, depth - 1, -beta, -alpha)
+    if curr > score:
+        score = curr
+    if score > alpha:
+        alpha = score
+    board.pop()
+    if alpha >= beta:
+        return alpha
+    return score
+
+
+def minimax_all_moves(board: chess.Board, player: int, depth: int, alpha: int, beta: int) -> float:
+    if depth == 0:
+        return evaluate(board) * player
+    score = -math.inf
+    for move in order_moves(board):
         board.push(move)
-        curr = -minimax(board, -player, depth - 1, -beta, -alpha)
+        curr = -minimax_all_moves(board, -player, depth - 1, -beta, -alpha)
         if curr > score:
             score = curr
         if score > alpha:
@@ -140,36 +157,3 @@ def minimax(board: chess.Board, player: int, depth: int, alpha: int, beta: int) 
             return alpha
     return score
 
-# def minimax(board: chess.Board, depth: int, alpha: int, beta: int, turn_multiplier: int, best_score_so_far: float = -999) -> float:
-#     if depth == 0:
-#         return evaluate(board) * turn_multiplier
-#     else:
-#         best_score = best_score_so_far
-#         for move in order_moves(board):
-#             board.push(move)
-#             score = minimax(board, depth-1, -beta, -alpha, -turn_multiplier, best_score)
-#             if score > best_score_so_far:
-#                 best_score = max(best_score_so_far, score)
-#             board.pop()
-#             if best_score
-
-
-#
-# def minimax(board: chess.Board, board_move: chess.Move, depth: int, alpha: int, beta: int, turn_multiplier: int) -> float:
-#     max_score = -999
-#     next_move = board_move
-#     if depth == 0:
-#         evaluation = turn_multiplier * float(evaluate(board))
-#         return float(evaluation)
-#     else:
-#         for move in order_moves(board):
-#             board.push(move)
-#             score = -minimax(board, next_move, depth - 1, -beta, -alpha, -turn_multiplier)
-#             if score > max_score:
-#                 max_score = score
-#             board.pop()
-#             if max_score > alpha:  # pruning
-#                 alpha = max_score
-#             if alpha >= beta:
-#                 break
-#         return float(max_score)

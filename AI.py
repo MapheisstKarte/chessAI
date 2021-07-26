@@ -1,4 +1,5 @@
 import math
+import time
 from dataclasses import dataclass
 from typing import Optional
 
@@ -6,7 +7,7 @@ import chess
 
 import ValueTables as vt
 
-DEPTH = 5
+DEPTH = 6
 
 
 def evaluate(board: chess.Board):
@@ -100,6 +101,7 @@ class MoveFinder:
         self.counter = 0
         move_result = self.findMoveNegaMax(board, DEPTH, -999, 999, 1 if board.turn else - 1)
         print("Positions calculated: " + str(self.counter))
+        print("Time: " + str(time.perf_counter()))
         return move_result
 
     # negamax algorithm with Alpha-Beta pruning

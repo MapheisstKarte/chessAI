@@ -7,6 +7,7 @@ from typing import Optional
 import chess
 
 import ValueTables as vt
+from chess_helper import full_null_move
 
 
 def evaluate(board: chess.Board):
@@ -68,6 +69,7 @@ def evaluate_square(board: chess.Board, square: int, piece: chess.Piece) -> floa
             evaluation -= 999 + (vt.Heuristics.KING_TABLE.flatten()[square])
     return evaluation / 100
 
+
 def order_moves(board: chess.Board):
     first_moves = []
     other = []
@@ -93,6 +95,7 @@ class BoardMove:
 
 
 def find_best_move(board: chess.Board, pool: ProcessPoolExecutor) -> MoveResult:
+    time_start = time.time()
     max_score = -math.inf
     next_move = None
 
@@ -108,13 +111,13 @@ def find_best_move(board: chess.Board, pool: ProcessPoolExecutor) -> MoveResult:
         if result.score > max_score:
             max_score = result.score
             next_move = result.move
-    print("Time: " + str(time.perf_counter()))
+    print("Time: " + str(time.time() - time_start))
     return MoveResult(move=next_move, score=max_score)
 
 
 def minimax_finder(board_move: BoardMove) -> MoveResult:
     board = board_move.board
-    result = minimax(board, board_move.move, 1 if board.turn else -1, 5, -999, 999)
+    result = minimax(board, board_move.move, 1 if board.turn else -1, 4, -999, 999)
     return MoveResult(move=board_move.move, score=result)
 
 
@@ -135,12 +138,21 @@ def minimax(board: chess.Board, move: chess.Move, player: int, depth: int, alpha
 
 
 def minimax_all_moves(board: chess.Board, player: int, depth: int, alpha: int, beta: int) -> float:
-    if depth == 0:
+    R = 2
+    if depth <= 0:
         return evaluate(board) * player
     score = -math.inf
+
+    if not board.is_check():
+        board_after_null_move = full_null_move(board.copy(), evaluate)
+        rating_after_null_move = -minimax_all_moves(board_after_null_move, player, depth - R - 1, -beta, -beta + 1)
+        if rating_after_null_move >= beta:
+            return rating_after_null_move
+
     for move in order_moves(board):
         board.push(move)
         curr = -minimax_all_moves(board, -player, depth - 1, -beta, -alpha)
+
         if curr > score:
             score = curr
         if score > alpha:
@@ -149,4 +161,3 @@ def minimax_all_moves(board: chess.Board, player: int, depth: int, alpha: int, b
         if alpha >= beta:
             return alpha
     return score
-

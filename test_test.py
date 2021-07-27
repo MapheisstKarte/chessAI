@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import chess
 
-from test import find_best_move, evaluate
+from search import find_best_move, evaluate
 
 
 class Test(TestCase):

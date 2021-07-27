@@ -3,7 +3,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 import chess
 
-from test import find_best_move
+from search import find_best_move
 
 if __name__ == "__main__":
     pool = ProcessPoolExecutor()
@@ -17,7 +17,12 @@ if __name__ == "__main__":
             while True:
                 try:
                     player_move = input()
-                    board.push_san(player_move)
+                    if player_move == "pop":
+                        if len(board.move_stack) >= 2:
+                            board.pop()
+                            board.pop()
+                    else:
+                        board.push_san(player_move)
                     break
                 except:
                     print("move not in legal moves")

@@ -7,7 +7,7 @@ from typing import Optional
 import chess
 
 import ValueTables as vt
-from chess_helper import full_null_move
+from chess_helper import make_null_move, undo_null_move
 
 
 def evaluate(board: chess.Board):
@@ -117,7 +117,7 @@ def find_best_move(board: chess.Board, pool: ProcessPoolExecutor) -> MoveResult:
 
 def minimax_finder(board_move: BoardMove) -> MoveResult:
     board = board_move.board
-    result = minimax(board, board_move.move, 1 if board.turn else -1, 4, -999, 999)
+    result = minimax(board, board_move.move, 1 if board.turn else -1, 5, -999, 999)
     return MoveResult(move=board_move.move, score=result)
 
 
@@ -143,11 +143,12 @@ def minimax_all_moves(board: chess.Board, player: int, depth: int, alpha: int, b
         return evaluate(board) * player
     score = -math.inf
 
-    if not board.is_check():
-        board_after_null_move = full_null_move(board.copy(), evaluate)
-        rating_after_null_move = -minimax_all_moves(board_after_null_move, player, depth - R - 1, -beta, -beta + 1)
+    if not board.is_check() and depth >= 3:
+        make_null_move(board, evaluate)
+        rating_after_null_move = -minimax_all_moves(board, -player, -beta, -beta + 1, depth - 1 - R)
+        undo_null_move(board)
         if rating_after_null_move >= beta:
-            return rating_after_null_move
+            return beta
 
     for move in order_moves(board):
         board.push(move)

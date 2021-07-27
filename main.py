@@ -9,7 +9,6 @@ if __name__ == "__main__":
     pool = ProcessPoolExecutor()
     board = chess.Board()
     print(board)
-
     while not board.is_game_over():
 
         if board.turn:
@@ -32,6 +31,7 @@ if __name__ == "__main__":
         elif not board.turn:
             print("-------------------------------")
             move_result = find_best_move(board, pool)
+            # move_result = move_finder.findBestMoveNegaMax(board)
             print(move_result)
             board.push(move_result.move)
             evaluation = move_result.score

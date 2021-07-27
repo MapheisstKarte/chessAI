@@ -1,74 +1,12 @@
-import math
 import time
 from dataclasses import dataclass
 from typing import Optional
 
 import chess
 
-import ValueTables as vt
+from search import evaluate
 
 DEPTH = 6
-
-
-def evaluate(board: chess.Board):
-    evaluation = 0
-    rank = 0
-    while rank < 8:
-        file = 0
-        while file < 8:
-            square = chess.square(file, rank)
-            piece = board.piece_at(square)
-            if piece is not None:
-                color = piece.color
-                piece_type = piece.piece_type
-                if color:
-                    if piece_type == 1:
-                        evaluation += 10 + (vt.Heuristics.WHITE_PAWN_TABLE[file, rank] / 10)
-                    elif piece_type == 2:
-                        evaluation += 30 + (vt.Heuristics.KNIGHT_TABLE[file, rank] / 10)
-                    elif piece_type == 3:
-                        evaluation += 32.5 + (vt.Heuristics.BISHOP_TABLE[file, rank] / 10)
-                    elif piece_type == 4:
-                        evaluation += 50 + (vt.Heuristics.ROOK_TABLE[file, rank] / 10)
-                    elif piece_type == 5:
-                        evaluation += 90 + (vt.Heuristics.QUEEN_TABLE[file, rank] / 10)
-                    elif piece_type == 6:
-                        evaluation += 999 + (vt.Heuristics.KING_TABLE[file, rank] / 10)
-
-                elif not color:
-                    if piece_type == 1:
-                        evaluation -= 10 + (vt.Heuristics.BLACK_PAWN_TABLE[file, rank] / 10)
-                    elif piece_type == 2:
-                        evaluation -= 30 + (vt.Heuristics.KNIGHT_TABLE[file, rank] / 10)
-                    elif piece_type == 3:
-                        evaluation -= 35 + (vt.Heuristics.BISHOP_TABLE[file, rank] / 10)
-                    elif piece_type == 4:
-                        evaluation -= 50 + (vt.Heuristics.ROOK_TABLE[file, rank] / 10)
-                    elif piece_type == 5:
-                        evaluation -= 90 + (vt.Heuristics.QUEEN_TABLE[file, rank] / 10)
-                    elif piece_type == 6:
-                        evaluation -= 999 + (vt.Heuristics.KING_TABLE[file, rank] / 10)
-
-            file = file + 1
-        rank = rank + 1
-    if board.is_stalemate():
-        evaluation = 0
-        return evaluation
-
-    if board.turn:  # if it's white's turn
-        if board.is_checkmate():
-            evaluation = -math.inf
-            return evaluation
-        if board.is_check():
-            evaluation += 0.1
-    else:  # if it's blacks turn
-        if board.is_checkmate():
-            evaluation = +math.inf
-            return evaluation
-        if board.is_check():
-            evaluation -= 0.1
-
-    return evaluation / 10
 
 
 def orderMoves(board: chess.Board):
@@ -107,15 +45,24 @@ class MoveFinder:
     # negamax algorithm with Alpha-Beta pruning
 
     def findMoveNegaMax(self, board: chess.Board, depth, alpha, beta, turnMultiplier) -> MoveResult:
-        self.counter += 1
         maxScore = -999
         nextMove = None
+        R = 2
 
-        if depth == 0 or board.is_checkmate():
+        if depth <= 0 or board.is_checkmate():
             return MoveResult(move=nextMove, maxScore=turnMultiplier * evaluate(board))
+
+        # if not board.is_check() and depth >= 3:
+        #    make_null_move(board, evaluate)
+        #    rating_after_null_move = -self.findMoveNegaMax(board, depth-1 - R, -beta, -beta + 1, -turnMultiplier).maxScore
+        #    undo_null_move(board)
+        #    if rating_after_null_move >= beta:
+        #        print("pruned")
+        #        return MoveResult(move=nextMove, maxScore=beta)
 
         for move in orderMoves(board):
             board.push(move)
+            self.counter += 1
             score = -self.findMoveNegaMax(board, depth - 1, -beta, -alpha, -turnMultiplier).maxScore
             if score > maxScore:
                 maxScore = score

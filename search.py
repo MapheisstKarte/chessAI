@@ -96,7 +96,7 @@ class BoardMove:
 
 def find_best_move(board: chess.Board, pool: ProcessPoolExecutor) -> MoveResult:
     time_start = time.time()
-    max_score = -math.inf
+    max_score = -999
     next_move = None
 
     next_boards = []
@@ -124,7 +124,7 @@ def minimax_finder(board_move: BoardMove) -> MoveResult:
 def minimax(board: chess.Board, move: chess.Move, player: int, depth: int, alpha: int, beta: int) -> float:
     if depth == 0:
         return evaluate(board) * player
-    score = -math.inf
+    score = -999
     board.push(move)
     curr = -minimax_all_moves(board, -player, depth - 1, -beta, -alpha)
     if curr > score:
@@ -141,11 +141,11 @@ def minimax_all_moves(board: chess.Board, player: int, depth: int, alpha: int, b
     R = 2
     if depth <= 0:
         return evaluate(board) * player
-    score = -math.inf
+    score = -999
 
     if not board.is_check() and depth >= 3:
         make_null_move(board, evaluate)
-        rating_after_null_move = -minimax_all_moves(board, -player, -beta, -beta + 1, depth - 1 - R)
+        rating_after_null_move = -minimax_all_moves(board, -player, -beta + 1, -beta, depth - 1 - R)
         undo_null_move(board)
         if rating_after_null_move >= beta:
             return beta

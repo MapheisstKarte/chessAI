@@ -3,7 +3,6 @@ from concurrent.futures import ProcessPoolExecutor
 import chess
 import pygame as p
 
-from AI import MoveFinder
 from search import find_best_move
 
 WIDTH = HEIGHT = 720
@@ -35,8 +34,6 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     board = chess.Board()
-    move_finder = MoveFinder(board)
-    # board.set_board_fen("r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R")
     running = True
     selected_square = ()
     player_clicks = []
@@ -46,8 +43,8 @@ def main():
                 running = False
             elif e.type == p.MOUSEBUTTONDOWN:
                 location = p.mouse.get_pos()
-                rank = location[0] // SQ_SIZE
-                file = location[1] // SQ_SIZE
+                file = location[0] // SQ_SIZE
+                rank = location[1] // SQ_SIZE
                 if selected_square == (file, rank):
                     selected_square = ()
                     player_clicks = []
@@ -70,7 +67,7 @@ def main():
                             print("make a new move")
 
         clock.tick(MAX_FPS)
-        drawGameState(screen, board)
+        draw_game(screen, board)
         p.display.flip()
         if not board.is_game_over() and not board.turn:
             move_result = find_best_move(board, pool)
@@ -78,17 +75,17 @@ def main():
             print(f"move: {move_result.move}    score: {move_result.score}")
 
 
-def drawGameState(screen, board: chess.Board):
+def draw_game(screen, board: chess.Board):
     draw_board(screen)
     draw_pieces(screen, board)
 
 
 def draw_board(screen):
-    colors = [p.Color("white"), p.Color("gray")]
+    colors = [p.Color("white"), p.Color("pink")]
     for file in range(DIMENSION):
         for rank in range(DIMENSION):
             color = colors[((rank + file) % 2)]
-            p.draw.rect(screen, color, p.Rect(rank * SQ_SIZE, file * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+            p.draw.rect(screen, color, p.Rect(file * SQ_SIZE, rank * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 
 def draw_pieces(screen, board: chess.Board):

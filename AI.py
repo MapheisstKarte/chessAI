@@ -7,7 +7,7 @@ import chess
 from chess_helper import undo_null_move, make_null_move
 from search import evaluate, order_moves
 
-DEPTH = 5
+DEPTH = 4
 
 
 @dataclass
@@ -48,7 +48,7 @@ class MoveFinder:
                 print("pruned")
                 return MoveResult(move=nextMove, maxScore=beta)
 
-        for move in order_moves(board):
+        for move in order_moves(board, list(board.legal_moves)):
             board.push(move)
             self.counter += 1
             score = -self.findMoveNegaMax(board, depth - 1, -beta, -alpha, -turnMultiplier).maxScore

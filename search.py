@@ -32,14 +32,10 @@ def evaluate(board: chess.Board):
         if board.is_checkmate():
             evaluation = math.inf
             return evaluation
-        if board.is_check():
-            evaluation += 0.1
     else:  # if it's blacks turn
         if board.is_checkmate():
             evaluation = -math.inf
             return evaluation
-        if board.is_check():
-            evaluation -= 0.1
     if board.is_variant_draw():
         evaluation = 0
         return evaluation

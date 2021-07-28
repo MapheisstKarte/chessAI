@@ -4,24 +4,11 @@ from typing import Optional
 
 import chess
 
-from search import evaluate
+from chess_helper import undo_null_move, make_null_move
+from search import evaluate, order_moves
 
-DEPTH = 6
+DEPTH = 5
 
-
-def orderMoves(board: chess.Board):
-    firstMoves = []
-    other = []
-
-    for move in board.legal_moves:
-        if board.gives_check(move) or board.is_capture(move):
-            firstMoves.append(move)
-        else:
-            other.append(move)
-    return firstMoves + other
-
-
-# helping function
 
 @dataclass
 class MoveResult:
@@ -52,15 +39,16 @@ class MoveFinder:
         if depth <= 0 or board.is_checkmate():
             return MoveResult(move=nextMove, maxScore=turnMultiplier * evaluate(board))
 
-        # if not board.is_check() and depth >= 3:
-        #    make_null_move(board, evaluate)
-        #    rating_after_null_move = -self.findMoveNegaMax(board, depth-1 - R, -beta, -beta + 1, -turnMultiplier).maxScore
-        #    undo_null_move(board)
-        #    if rating_after_null_move >= beta:
-        #        print("pruned")
-        #        return MoveResult(move=nextMove, maxScore=beta)
+        if not board.is_check() and depth >= 4:
+            make_null_move(board, evaluate)
+            rating_after_null_move = -self.findMoveNegaMax(board, depth - 1 - R, -beta + 1, -beta,
+                                                           -turnMultiplier).maxScore
+            undo_null_move(board)
+            if rating_after_null_move >= beta:
+                print("pruned")
+                return MoveResult(move=nextMove, maxScore=beta)
 
-        for move in orderMoves(board):
+        for move in order_moves(board):
             board.push(move)
             self.counter += 1
             score = -self.findMoveNegaMax(board, depth - 1, -beta, -alpha, -turnMultiplier).maxScore

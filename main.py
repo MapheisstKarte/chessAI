@@ -8,6 +8,7 @@ from search import find_best_move
 if __name__ == "__main__":
     pool = ProcessPoolExecutor()
     board = chess.Board()
+    # board.set_board_fen("r2qkb1r/pp2pp1p/3p1np1/2p3B1/4P3/2N2Q2/PPP2PPP/R4RK1")
     print(board)
     while not board.is_game_over():
 
@@ -31,7 +32,7 @@ if __name__ == "__main__":
         elif not board.turn:
             print("-------------------------------")
             move_result = find_best_move(board, pool)
-            # move_result = move_finder.findBestMoveNegaMax(board)
+            # move_result = MoveFinder(board).findBestMoveNegaMax(board)
             board.push(move_result.move)
             evaluation = move_result.score
             print("Evaluation " + str((evaluation * 10) * -1))

@@ -15,7 +15,6 @@ def evaluate(board: chess.Board):
     if board.is_stalemate():
         evaluation = 0
         return evaluation
-
     if board.turn:  # if it's white's turn
         if board.is_checkmate():
             evaluation = math.inf
@@ -30,9 +29,9 @@ def evaluate(board: chess.Board):
             evaluation -= 0.1
 
     for fieldnumber in range(64):
-        piece_at = board.piece_at(fieldnumber)
-        if piece_at is not None:
-            evaluation += evaluate_square(board, fieldnumber, piece_at)
+        piece = board.piece_at(fieldnumber)
+        if piece is not None:
+            evaluation += evaluate_square(board, fieldnumber, piece)
     return evaluation
 
 
@@ -42,31 +41,31 @@ def evaluate_square(board: chess.Board, square: int, piece: chess.Piece) -> floa
     piece_type = piece.piece_type
     if color:
         if piece_type == 1:
-            evaluation += 10 + (vt.Heuristics.WHITE_PAWN_TABLE.flatten()[square])
+            evaluation += 10 + (vt.Heuristics.WHITE_PAWN_TABLE.flatten()[square] / 2)
         elif piece_type == 2:
-            evaluation += 30 + (vt.Heuristics.KNIGHT_TABLE.flatten()[square])
+            evaluation += 30 + (vt.Heuristics.KNIGHT_TABLE.flatten()[square] / 2)
         elif piece_type == 3:
-            evaluation += 32.5 + (vt.Heuristics.BISHOP_TABLE.flatten()[square])
+            evaluation += 32.5 + (vt.Heuristics.BISHOP_TABLE.flatten()[square] / 2)
         elif piece_type == 4:
-            evaluation += 50 + (vt.Heuristics.ROOK_TABLE.flatten()[square])
+            evaluation += 50 + (vt.Heuristics.ROOK_TABLE.flatten()[square] / 2)
         elif piece_type == 5:
-            evaluation += 90 + (vt.Heuristics.QUEEN_TABLE.flatten()[square])
+            evaluation += 90 + (vt.Heuristics.QUEEN_TABLE.flatten()[square] / 2)
         elif piece_type == 6:
-            evaluation += 999 + (vt.Heuristics.KING_TABLE.flatten()[square])
+            evaluation += 999 + (vt.Heuristics.KING_TABLE.flatten()[square] / 2)
 
     elif not color:
         if piece_type == 1:
-            evaluation -= 10 + (vt.Heuristics.BLACK_PAWN_TABLE.flatten()[square])
+            evaluation -= 10 + (vt.Heuristics.BLACK_PAWN_TABLE.flatten()[square] / 2)
         elif piece_type == 2:
-            evaluation -= 30 + (vt.Heuristics.KNIGHT_TABLE.flatten()[square])
+            evaluation -= 30 + (vt.Heuristics.KNIGHT_TABLE.flatten()[square] / 2)
         elif piece_type == 3:
-            evaluation -= 35 + (vt.Heuristics.BISHOP_TABLE.flatten()[square])
+            evaluation -= 35 + (vt.Heuristics.BISHOP_TABLE.flatten()[square] / 2)
         elif piece_type == 4:
-            evaluation -= 50 + (vt.Heuristics.ROOK_TABLE.flatten()[square])
+            evaluation -= 50 + (vt.Heuristics.ROOK_TABLE.flatten()[square] / 2)
         elif piece_type == 5:
-            evaluation -= 90 + (vt.Heuristics.QUEEN_TABLE.flatten()[square])
+            evaluation -= 90 + (vt.Heuristics.QUEEN_TABLE.flatten()[square] / 2)
         elif piece_type == 6:
-            evaluation -= 999 + (vt.Heuristics.KING_TABLE.flatten()[square])
+            evaluation -= 999 + (vt.Heuristics.KING_TABLE.flatten()[square] / 2)
     return evaluation / 100
 
 
@@ -123,7 +122,7 @@ def minimax_finder(board_move: BoardMove) -> MoveResult:
 
 def minimax(board: chess.Board, move: chess.Move, player: int, depth: int, alpha: int, beta: int) -> float:
     if depth == 0:
-        return evaluate(board) * player
+        return evaluate(board)
     score = -999
     board.push(move)
     curr = -minimax_all_moves(board, -player, depth - 1, -beta, -alpha)

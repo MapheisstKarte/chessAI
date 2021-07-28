@@ -32,10 +32,9 @@ if __name__ == "__main__":
             print("-------------------------------")
             move_result = find_best_move(board, pool)
             # move_result = move_finder.findBestMoveNegaMax(board)
-            print(move_result)
             board.push(move_result.move)
             evaluation = move_result.score
-            print("Evaluation " + str(evaluation * 10))
+            print("Evaluation " + str((evaluation * 10) * -1))
             print("AI Move: " + chess.Move.__str__(move_result.move))
             print(board)
             print("-------------------------------")

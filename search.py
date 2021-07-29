@@ -60,10 +60,11 @@ def evaluate(board: chess.Board):
 
     endgame_weight = (32 - pieces) / 32
     if board.turn:
-        evaluation -= endgame_eval(board, opponent_king, friendly_king, endgame_weight)
+        evaluation += endgame_eval(board, friendly_king, opponent_king, endgame_weight)
     else:
-        evaluation += endgame_eval(board, opponent_king, friendly_king, endgame_weight)
-    return evaluation / 10
+        evaluation -= endgame_eval(board, friendly_king, opponent_king, endgame_weight)
+
+    return evaluation / 100
 
 
 def endgame_eval(board: chess.Board, friendly_king_square: int, opponent_king_square: int, endgame_weight: float):
@@ -159,7 +160,7 @@ def move_score_guess(board: chess.Board, move):
         else:
             score_guess = 0
     elif board.gives_check(move):
-        score_guess = 500
+        score_guess = 300
     else:
         score_guess = 0
 
@@ -183,11 +184,11 @@ def find_best_move(board: chess.Board, pool: ProcessPoolExecutor) -> MoveResult:
 
 def minimax_finder(board_move: BoardMove) -> MoveResult:
     board = board_move.board
-    result = minimax(board, board_move.move, 1 if board.turn else -1, 3, -999, 999)
+    result = minimax(board, board_move.move, 1 if board.turn else -1, 4, -999, 999)
     return MoveResult(move=board_move.move, score=result)
 
 
-def minimax(board: chess.Board, move: chess.Move, player: int, depth: int, alpha: float, beta: float) -> float:
+def minimax(board: chess.Board, move: chess.Move, player: int, depth: int, alpha, beta) -> float:
     if depth == 0 or board.is_game_over():
         return evaluate(board) * player
     evalution = -math.inf
@@ -200,16 +201,16 @@ def minimax(board: chess.Board, move: chess.Move, player: int, depth: int, alpha
     return alpha
 
 
-def minimax_all_moves(board: chess.Board, player: int, depth: int, alpha: float, beta: float) -> float:
+def minimax_all_moves(board: chess.Board, player: int, depth: int, alpha, beta) -> float:
     if depth <= 0 or board.is_game_over():
         evaluation = evaluate(board) * player
         # return evaluation
-        deepened_score = minimax_every_capture_and_check(board, player, -beta, -alpha)
+        deepened_score = minimax_every_capture_and_check(board, -player, -beta, -alpha)
         return max(evaluation, deepened_score)
 
-    if not board.is_check() and len(list(board.legal_moves)) == 0 and depth >= 3:
+    if not board.is_check() and not len(list(board.legal_moves)) == 0 and depth >= 3:
         make_null_move(board, evaluate)
-        rating_after_null_move = -minimax_all_moves(board, -player, depth - 2, -beta, -beta + 1)
+        rating_after_null_move = -minimax_all_moves(board, -player, depth - 3, -beta, -alpha)
         undo_null_move(board)
         if rating_after_null_move >= beta:
             return beta

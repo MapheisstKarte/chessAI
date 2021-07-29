@@ -35,8 +35,9 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     board = chess.Board()
-    # board.set_board_fen("8/8/5Q2/2k5/4K3/8/8/8")
+    board.set_board_fen("8/8/5Q2/2k5/4K3/8/8/8")
     # board.set_board_fen("3q4/8/8/2k5/4K3/8/8/8")
+    # board.set_board_fen("3k4/8/8/8/8/R7/6K1/8")
     running = True
     selected_square = ()
     player_clicks = []
@@ -59,7 +60,7 @@ def main():
                 if len(player_clicks) == 2:
                     from_square = chess.square_name(player_clicks[0])
                     to_square = chess.square_name(player_clicks[1])
-                    if board.turn:
+                    if not board.turn:
                         try:
                             board.push_san(from_square + to_square)
                             player_clicks = []
@@ -80,7 +81,7 @@ def main():
         if not board.is_game_over():
             move_result = find_best_move(board, pool)
             board.push(move_result.move)
-            print(f"move: {move_result.move}    score: {move_result.score}")
+            print(f"move: {move_result.move}    score: {move_result.score * 10}")
         elif board.is_game_over():
             print("Game Over: " + board.result())
 
@@ -91,7 +92,7 @@ def draw_game(screen, board: chess.Board):
 
 
 def draw_board(screen):
-    colors = [p.Color("white"), p.Color(255, 175, 148)]
+    colors = [p.Color(175, 182, 224), p.Color(125, 143, 245)]
     for file in range(DIMENSION):
         for rank in range(DIMENSION):
             color = colors[((rank + file) % 2)]

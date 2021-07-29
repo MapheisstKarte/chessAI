@@ -28,57 +28,99 @@ def evaluate(board: chess.Board):
     if board.is_stalemate():
         evaluation = 0
         return evaluation
-    if board.turn:  # if it's white's turn
-        if board.is_checkmate():
-            evaluation = math.inf
-            return evaluation
-    else:  # if it's blacks turn
-        if board.is_checkmate():
+    if board.is_checkmate():
+        if board.turn:
             evaluation = -math.inf
+            return evaluation
+        else:
+            evaluation = math.inf
             return evaluation
     if board.is_variant_draw():
         evaluation = 0
         return evaluation
-
+    pieces = 0
+    friendly_king = -1
+    opponent_king = -1
     for fieldnumber in range(64):
         piece = board.piece_at(fieldnumber)
         if piece is not None:
+            pieces += 1
             evaluation += evaluate_square(board, fieldnumber, piece)
-    return evaluation
+            if piece.piece_type == 6:
+                if board.turn:
+                    if piece.color:
+                        friendly_king = fieldnumber
+                    if not piece.color:
+                        opponent_king = fieldnumber
+                else:
+                    if not piece.color:
+                        friendly_king = fieldnumber
+                    if piece.color:
+                        opponent_king = fieldnumber
+
+    endgame_weight = (32 - pieces) / 32
+    if board.turn:
+        evaluation -= endgame_eval(board, opponent_king, friendly_king, endgame_weight)
+    else:
+        evaluation += endgame_eval(board, opponent_king, friendly_king, endgame_weight)
+    return evaluation / 10
+
+
+def endgame_eval(board: chess.Board, friendly_king_square: int, opponent_king_square: int, endgame_weight: float):
+    evaluation = 0
+    opponent_king_rank = chess.square_rank(opponent_king_square)
+    opponent_king_file = chess.square_file(opponent_king_square)
+
+    opponent_king_dst_to_centre_file = max(3 - opponent_king_file, opponent_king_file - 4)
+    opponent_king_dst_to_centre_rank = max(3 - opponent_king_rank, opponent_king_rank - 4)
+    opponent_king_dst_from_centre = opponent_king_dst_to_centre_file + opponent_king_dst_to_centre_rank
+    evaluation += opponent_king_dst_from_centre
+
+    friendly_king_rank = chess.square_rank(friendly_king_square)
+    friendly_king_file = chess.square_file(friendly_king_square)
+
+    dst_between_kings_file = abs(friendly_king_file - opponent_king_file)
+    dst_between_kings_rank = abs(friendly_king_rank - opponent_king_rank)
+    dst_between_kings = dst_between_kings_rank + dst_between_kings_file
+
+    evaluation += 14 - dst_between_kings
+
+    return (evaluation * 10 * endgame_weight)
 
 
 def evaluate_square(board: chess.Board, square: int, piece: chess.Piece) -> float:
-    evaluation = 0
+    white_evaluation = 0
+    black_evaluation = 0
     color = piece.color
     piece_type = piece.piece_type
     if color:
         if piece_type == 1:
-            evaluation += 10 + (vt.Heuristics.WHITE_PAWN_TABLE.flatten()[square] / 2)
+            white_evaluation += 10 + vt.Heuristics.WHITE_PAWN_TABLE.flatten()[square] / 10
         elif piece_type == 2:
-            evaluation += 30 + (vt.Heuristics.KNIGHT_TABLE.flatten()[square] / 2)
+            white_evaluation += 30 + vt.Heuristics.KNIGHT_TABLE.flatten()[square] / 10
         elif piece_type == 3:
-            evaluation += 32.5 + (vt.Heuristics.BISHOP_TABLE.flatten()[square] / 2)
+            white_evaluation += 35 + vt.Heuristics.BISHOP_TABLE.flatten()[square] / 10
         elif piece_type == 4:
-            evaluation += 50 + (vt.Heuristics.ROOK_TABLE.flatten()[square] / 2)
+            white_evaluation += 50 + vt.Heuristics.ROOK_TABLE.flatten()[square] / 10
         elif piece_type == 5:
-            evaluation += 90 + (vt.Heuristics.QUEEN_TABLE.flatten()[square] / 2)
+            white_evaluation += 90 + vt.Heuristics.QUEEN_TABLE.flatten()[square] / 10
         elif piece_type == 6:
-            evaluation += 999 + (vt.Heuristics.KING_TABLE.flatten()[square] / 2)
+            white_evaluation += vt.Heuristics.KING_TABLE.flatten()[square] / 10
 
     elif not color:
         if piece_type == 1:
-            evaluation -= 10 + (vt.Heuristics.BLACK_PAWN_TABLE.flatten()[square] / 2)
+            black_evaluation += 10 + vt.Heuristics.BLACK_PAWN_TABLE.flatten()[square] / 10
         elif piece_type == 2:
-            evaluation -= 30 + (vt.Heuristics.KNIGHT_TABLE.flatten()[square] / 2)
+            black_evaluation += 30 + vt.Heuristics.KNIGHT_TABLE.flatten()[square] / 10
         elif piece_type == 3:
-            evaluation -= 35 + (vt.Heuristics.BISHOP_TABLE.flatten()[square] / 2)
+            black_evaluation += 35 + vt.Heuristics.BISHOP_TABLE.flatten()[square] / 10
         elif piece_type == 4:
-            evaluation -= 50 + (vt.Heuristics.ROOK_TABLE.flatten()[square] / 2)
+            black_evaluation += 50 + vt.Heuristics.ROOK_TABLE.flatten()[square] / 10
         elif piece_type == 5:
-            evaluation -= 90 + (vt.Heuristics.QUEEN_TABLE.flatten()[square] / 2)
+            black_evaluation += 90 + vt.Heuristics.QUEEN_TABLE.flatten()[square] / 10
         elif piece_type == 6:
-            evaluation -= 999 + (vt.Heuristics.KING_TABLE.flatten()[square] / 2)
-    return evaluation / 100
+            black_evaluation += vt.Heuristics.KING_TABLE.flatten()[square] / 10
+    return white_evaluation - black_evaluation
 
 
 def order_moves(board: chess.Board, legal_moves: list) -> list:
@@ -117,7 +159,7 @@ def move_score_guess(board: chess.Board, move):
         else:
             score_guess = 0
     elif board.gives_check(move):
-        score_guess = 25
+        score_guess = 500
     else:
         score_guess = 0
 
@@ -146,8 +188,8 @@ def minimax_finder(board_move: BoardMove) -> MoveResult:
 
 
 def minimax(board: chess.Board, move: chess.Move, player: int, depth: int, alpha: float, beta: float) -> float:
-    if depth == 0:
-        return evaluate(board)
+    if depth == 0 or board.is_game_over():
+        return evaluate(board) * player
     evalution = -math.inf
     board.push(move)
     evaluation = -minimax_all_moves(board, -player, depth - 1, -beta, -alpha)
@@ -159,13 +201,13 @@ def minimax(board: chess.Board, move: chess.Move, player: int, depth: int, alpha
 
 
 def minimax_all_moves(board: chess.Board, player: int, depth: int, alpha: float, beta: float) -> float:
-    if depth <= 0:
+    if depth <= 0 or board.is_game_over():
         evaluation = evaluate(board) * player
         # return evaluation
         deepened_score = minimax_every_capture_and_check(board, player, -beta, -alpha)
         return max(evaluation, deepened_score)
 
-    if not board.is_check() and depth >= 3:
+    if not board.is_check() and len(list(board.legal_moves)) == 0 and depth >= 3:
         make_null_move(board, evaluate)
         rating_after_null_move = -minimax_all_moves(board, -player, depth - 2, -beta, -beta + 1)
         undo_null_move(board)

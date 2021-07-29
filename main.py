@@ -1,6 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor
 
 import chess
+import pygame
 import pygame as p
 
 from search import find_best_move
@@ -34,6 +35,8 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     board = chess.Board()
+    # board.set_board_fen("8/8/5Q2/2k5/4K3/8/8/8")
+    # board.set_board_fen("3q4/8/8/2k5/4K3/8/8/8")
     running = True
     selected_square = ()
     player_clicks = []
@@ -65,14 +68,21 @@ def main():
                             player_clicks = []
                             selected_square = ()
                             print("make a new move")
+            elif e.type == p.KEYDOWN:
+                if e.key == pygame.K_SPACE:
+                    if len(board.move_stack) > 1:
+                        board.pop()
+                        board.pop()
 
         clock.tick(MAX_FPS)
         draw_game(screen, board)
         p.display.flip()
-        if not board.is_game_over() and not board.turn:
+        if not board.is_game_over():
             move_result = find_best_move(board, pool)
             board.push(move_result.move)
             print(f"move: {move_result.move}    score: {move_result.score}")
+        elif board.is_game_over():
+            print("Game Over: " + board.result())
 
 
 def draw_game(screen, board: chess.Board):
@@ -81,7 +91,7 @@ def draw_game(screen, board: chess.Board):
 
 
 def draw_board(screen):
-    colors = [p.Color("white"), p.Color("pink")]
+    colors = [p.Color("white"), p.Color(255, 175, 148)]
     for file in range(DIMENSION):
         for rank in range(DIMENSION):
             color = colors[((rank + file) % 2)]
